@@ -1,2 +1,0 @@
-# Networking for GameObjects
-## NetworkTransform
