@@ -21,12 +21,14 @@ public class Player : NetworkBehaviour
     {
         if (IsOwner)
         {
+            //Cambiamos su posicion inicial
             SubmitInitialPositionRPC();
         }
     }
 
     private void Movement()
     {
+        //Calculamos la dirección de movimiento del player
         zVelocity = Input.GetKey(KeyCode.W) ? 1 : Input.GetKey(KeyCode.S) ? -1 : 0;
         xVelocity = Input.GetKey(KeyCode.D) ? 1 : Input.GetKey(KeyCode.A) ? -1 : 0;
 
@@ -47,9 +49,13 @@ public class Player : NetworkBehaviour
     [Rpc(SendTo.Server)]
     void SubmitPositionRequestServerRpc(float moveZ,float moveX)
     {
-        //movemos el player en servidor
-        transform.Translate(Vector3.forward * moveZ*Time.fixedDeltaTime * speed + Vector3.right * moveX*Time.fixedDeltaTime* speed,Space.Self);
+        //Desgraciadamente, no podemos hacer un clamp de transform.Translate por como funciona, lo que significa que debemos cambiar la logica para utilizar newPosition
+        Vector3 newPosition = transform.position;
+        newPosition.x = Mathf.Clamp(transform.position.x + moveX*Time.fixedDeltaTime* speed,-5,5);
+        newPosition.z = Mathf.Clamp(transform.position.z + moveZ*Time.fixedDeltaTime*speed,-5,5);
+        transform.position = newPosition;
     }
+
     //Creamos un método para cambiar la posición inicial y ponerlo al nivel del plano
     [Rpc(SendTo.Server)]
     void SubmitInitialPositionRPC(){
