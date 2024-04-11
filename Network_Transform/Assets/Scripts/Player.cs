@@ -7,6 +7,8 @@ using UnityEngine;
 [RequireComponent(typeof(CapsuleCollider))]
 public class Player : NetworkBehaviour
 {   
+    public static NetworkVariable<int> PlayMode2 = new NetworkVariable<int>();
+    public int PlayMode;
     protected int zVelocity;
     protected int xVelocity;
     private Rigidbody rb;
@@ -19,28 +21,58 @@ public class Player : NetworkBehaviour
 
     public override void OnNetworkSpawn()
     {
+        Debug.Log("{CLIENT} Spawned");
         if (IsOwner)
         {
             //Cambiamos su posicion inicial
             SubmitInitialPositionRPC();
         }
     }
+    public void ChangeAutority(int mode){
+        SubmitNewAutorityRPC(mode);
+    }
+    [Rpc(SendTo.Server)]
+    void SubmitNewAutorityRPC(int mode){
+        PlayMode2.Value = mode;
+    }
 
-    private void Movement()
+    //Metodo de movimiento para server autority
+    private void MovementServerAutority()
     {
         //Calculamos la dirección de movimiento del player
         zVelocity = Input.GetKey(KeyCode.W) ? 1 : Input.GetKey(KeyCode.S) ? -1 : 0;
         xVelocity = Input.GetKey(KeyCode.D) ? 1 : Input.GetKey(KeyCode.A) ? -1 : 0;
 
-        //float moveX = Input.GetAxis("Horizontal");
-        //float moveZ = Input.GetAxis("Vertical");
-
-        //Vector3 newPosition = new Vector3(moveX,0,moveZ);
-        //transform.position += newPosition * speed * Time.deltaTime;
         SubmitPositionRequestServerRpc(zVelocity,xVelocity);
     
     }
+    //Metodo de movimiento para client Autority
+    private void MovementClientAutority()
+    {
+        //Calculamos la dirección de movimiento del player
+        zVelocity = Input.GetKey(KeyCode.W) ? 1 : Input.GetKey(KeyCode.S) ? -1 : 0;
+        xVelocity = Input.GetKey(KeyCode.D) ? 1 : Input.GetKey(KeyCode.A) ? -1 : 0;
 
+        Vector3 newPosition = transform.position;
+        newPosition.x = Mathf.Clamp(transform.position.x + xVelocity*Time.fixedDeltaTime* speed,-5,5);
+        newPosition.z = Mathf.Clamp(transform.position.z + zVelocity*Time.fixedDeltaTime*speed,-5,5);
+        transform.position = newPosition;
+        //SubmitNewPositionServerRpc(newPosition);
+    
+    }
+    private void MovementServerRewind()
+    {
+        //Calculamos la dirección de movimiento del player
+        zVelocity = Input.GetKey(KeyCode.W) ? 1 : Input.GetKey(KeyCode.S) ? -1 : 0;
+        xVelocity = Input.GetKey(KeyCode.D) ? 1 : Input.GetKey(KeyCode.A) ? -1 : 0;
+
+        Vector3 newPosition = transform.position;
+        newPosition.x = Mathf.Clamp(transform.position.x + xVelocity*Time.fixedDeltaTime* speed,-5,5);
+        newPosition.z = Mathf.Clamp(transform.position.z + zVelocity*Time.fixedDeltaTime*speed,-5,5);
+        transform.position = newPosition;
+        SubmitNewPositionServerRpc(newPosition);
+    
+    }
     public void Jump() {
         Debug.Log("Salta");
         SubmitJumpRPC();
@@ -54,6 +86,12 @@ public class Player : NetworkBehaviour
         newPosition.x = Mathf.Clamp(transform.position.x + moveX*Time.fixedDeltaTime* speed,-5,5);
         newPosition.z = Mathf.Clamp(transform.position.z + moveZ*Time.fixedDeltaTime*speed,-5,5);
         transform.position = newPosition;
+    }
+    [Rpc(SendTo.Server)]
+    void SubmitNewPositionServerRpc(Vector3 newPosition)
+    {
+        //Desgraciadamente, no podemos hacer un clamp de transform.Translate por como funciona, lo que significa que debemos cambiar la logica para utilizar newPosition
+        //transform.position = newPosition;
     }
 
     //Creamos un método para cambiar la posición inicial y ponerlo al nivel del plano
@@ -72,7 +110,21 @@ public class Player : NetworkBehaviour
     void FixedUpdate()
     {
         if (IsOwner){
-            Movement();
+            Debug.Log(PlayMode);
+            switch (PlayMode){
+                case 1:
+                //ServerAutority
+                MovementServerAutority();
+                break;
+                case 2:
+                //ClientAutority
+                MovementClientAutority();
+                break;
+                case 3:
+                //ServerAutorityRewind
+                MovementServerRewind();
+                break;
+            }
         }
     }
     void Update(){
