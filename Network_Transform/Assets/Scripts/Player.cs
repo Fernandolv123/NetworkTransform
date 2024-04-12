@@ -1,21 +1,24 @@
 using System.Collections;
 using System.Collections.Generic;
 using Unity.Netcode;
+using Unity.Netcode.Components;
 using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody))]
 [RequireComponent(typeof(CapsuleCollider))]
 public class Player : NetworkBehaviour
 {   
-    public static NetworkVariable<int> PlayMode2 = new NetworkVariable<int>();
-    public int PlayMode;
+    public static NetworkVariable<int> PlayMode = new NetworkVariable<int>();
+    //public int PlayMode;
     protected int zVelocity;
     protected int xVelocity;
     private Rigidbody rb;
     public float speed = 4;
     public float jumpForce;
+    private CustomNetworkTransform networkTransform;
 
     void Awake() {
+        networkTransform = GetComponent<CustomNetworkTransform>();
         rb = GetComponent<Rigidbody>();
     }
 
@@ -26,14 +29,42 @@ public class Player : NetworkBehaviour
         {
             //Cambiamos su posicion inicial
             SubmitInitialPositionRPC();
+            GetPlayModeRPC();
         }
+    }
+    [Rpc(SendTo.Server)]
+    void GetPlayModeRPC(){
+        GameManager.instance.GetPlayMode(PlayMode);
     }
     public void ChangeAutority(int mode){
         SubmitNewAutorityRPC(mode);
     }
     [Rpc(SendTo.Server)]
     void SubmitNewAutorityRPC(int mode){
-        PlayMode2.Value = mode;
+        PlayMode.Value = mode;
+    }
+
+    private void Movement(){
+        //Calculamos la dirección de movimiento del player
+        zVelocity = Input.GetKey(KeyCode.W) ? 1 : Input.GetKey(KeyCode.S) ? -1 : 0;
+        xVelocity = Input.GetKey(KeyCode.D) ? 1 : Input.GetKey(KeyCode.A) ? -1 : 0;
+        if(networkTransform.IsServerAuthoritative()){
+            //ServerAutority
+            SubmitPositionRequestServerRpc(zVelocity,xVelocity);
+        } else if (!networkTransform.IsServerAuthoritative() && PlayMode.Value == 3){
+            //ServerRewind
+        } else if (!networkTransform.IsServerAuthoritative() && PlayMode.Value == 2){
+            //ClientAutority
+            Debug.Log("{Movement} Ests en client autority");
+
+            /*Vector3 newPosition = transform.position;
+            newPosition.x = transform.position.x + xVelocity*Time.fixedDeltaTime* speed;
+            newPosition.z = transform.position.z + zVelocity*Time.fixedDeltaTime*speed;
+            transform.position = newPosition;*/
+
+            transform.Translate(Vector3.forward * zVelocity*Time.fixedDeltaTime * speed + Vector3.right * xVelocity*Time.fixedDeltaTime* speed,Space.Self);
+            //SubmitNewPositionRpc(newPosition);
+        }
     }
 
     //Metodo de movimiento para server autority
@@ -53,25 +84,16 @@ public class Player : NetworkBehaviour
         zVelocity = Input.GetKey(KeyCode.W) ? 1 : Input.GetKey(KeyCode.S) ? -1 : 0;
         xVelocity = Input.GetKey(KeyCode.D) ? 1 : Input.GetKey(KeyCode.A) ? -1 : 0;
 
+        //El cliente se puede caer del plano
         Vector3 newPosition = transform.position;
-        newPosition.x = Mathf.Clamp(transform.position.x + xVelocity*Time.fixedDeltaTime* speed,-5,5);
-        newPosition.z = Mathf.Clamp(transform.position.z + zVelocity*Time.fixedDeltaTime*speed,-5,5);
+        newPosition.x = transform.position.x + xVelocity*Time.fixedDeltaTime* speed;
+        newPosition.z = transform.position.z + zVelocity*Time.fixedDeltaTime*speed;
         transform.position = newPosition;
-        //SubmitNewPositionServerRpc(newPosition);
+        SubmitNewPositionRpc(newPosition);
     
     }
     private void MovementServerRewind()
     {
-        //Calculamos la dirección de movimiento del player
-        zVelocity = Input.GetKey(KeyCode.W) ? 1 : Input.GetKey(KeyCode.S) ? -1 : 0;
-        xVelocity = Input.GetKey(KeyCode.D) ? 1 : Input.GetKey(KeyCode.A) ? -1 : 0;
-
-        Vector3 newPosition = transform.position;
-        newPosition.x = Mathf.Clamp(transform.position.x + xVelocity*Time.fixedDeltaTime* speed,-5,5);
-        newPosition.z = Mathf.Clamp(transform.position.z + zVelocity*Time.fixedDeltaTime*speed,-5,5);
-        transform.position = newPosition;
-        SubmitNewPositionServerRpc(newPosition);
-    
     }
     public void Jump() {
         Debug.Log("Salta");
@@ -87,11 +109,10 @@ public class Player : NetworkBehaviour
         newPosition.z = Mathf.Clamp(transform.position.z + moveZ*Time.fixedDeltaTime*speed,-5,5);
         transform.position = newPosition;
     }
-    [Rpc(SendTo.Server)]
-    void SubmitNewPositionServerRpc(Vector3 newPosition)
+    [Rpc(SendTo.NotMe)]
+    void SubmitNewPositionRpc(Vector3 newPosition)
     {
-        //Desgraciadamente, no podemos hacer un clamp de transform.Translate por como funciona, lo que significa que debemos cambiar la logica para utilizar newPosition
-        //transform.position = newPosition;
+        transform.position = newPosition;
     }
 
     //Creamos un método para cambiar la posición inicial y ponerlo al nivel del plano
@@ -110,21 +131,22 @@ public class Player : NetworkBehaviour
     void FixedUpdate()
     {
         if (IsOwner){
-            Debug.Log(PlayMode);
-            switch (PlayMode){
+            Debug.Log(PlayMode.Value);
+            switch (PlayMode.Value){
                 case 1:
                 //ServerAutority
-                MovementServerAutority();
+                networkTransform.IsServerAuthoritative(true);
                 break;
                 case 2:
                 //ClientAutority
-                MovementClientAutority();
+                networkTransform.IsServerAuthoritative(false);
                 break;
                 case 3:
                 //ServerAutorityRewind
-                MovementServerRewind();
+                networkTransform.IsServerAuthoritative(false);
                 break;
             }
+            Movement();
         }
     }
     void Update(){

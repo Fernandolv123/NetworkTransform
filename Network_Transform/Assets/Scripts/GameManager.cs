@@ -39,7 +39,6 @@ public class GameManager : MonoBehaviour
 
         void StatusLabels()
         {
-            //Debug.Log("Entra: "+PlayMode);
             var mode = NetworkManager.Singleton.IsHost ?
                 "Host" : NetworkManager.Singleton.IsServer ? "Server" : "Client";
 
@@ -47,9 +46,9 @@ public class GameManager : MonoBehaviour
                 NetworkManager.Singleton.NetworkConfig.NetworkTransport.GetType().Name);
             GUILayout.Label("Mode: " + (PlayMode==1 ? "ServerAuthority" : PlayMode==2 ? "ClientAuthority" : "ServerRewindAuthotity"));
             if (mode == "Host" || mode == "Server"){
-                if (GUILayout.Button("ServerAuthority")) SubmitNewPlayModeRPC(1);
-                if (GUILayout.Button("ClientAuthority")) SubmitNewPlayModeRPC(2);
-                if (GUILayout.Button("ServerRewindAuthotity")) SubmitNewPlayModeRPC(3);
+                if (GUILayout.Button("ServerAuthority")) ChangePlayMode(1);
+                if (GUILayout.Button("ClientAuthority")) ChangePlayMode(2);
+                if (GUILayout.Button("ServerRewindAuthotity")) ChangePlayMode(3);
             }
         }
 
@@ -70,8 +69,12 @@ public class GameManager : MonoBehaviour
                 }
             }
         }
-        void SubmitNewPlayModeRPC(int mode){
+        void ChangePlayMode(int mode){
+            PlayMode = mode;
             foreach (ulong uid in NetworkManager.Singleton.ConnectedClientsIds)
-                NetworkManager.Singleton.SpawnManager.GetPlayerNetworkObject(uid).GetComponent<Player>().ChangeAutority(mode);
+                NetworkManager.Singleton.SpawnManager.GetPlayerNetworkObject(uid).GetComponent<Player>().ChangeAutority(PlayMode);
+        }
+        public void GetPlayMode(NetworkVariable<int> network){
+            network.Value = PlayMode;
         }
 }
