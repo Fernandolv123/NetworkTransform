@@ -15,10 +15,8 @@ public class Player : NetworkBehaviour
     private Rigidbody rb;
     public float speed = 4;
     public float jumpForce;
-    private CustomNetworkTransform networkTransform;
 
     void Awake() {
-        networkTransform = GetComponent<CustomNetworkTransform>();
         rb = GetComponent<Rigidbody>();
     }
 
@@ -48,52 +46,26 @@ public class Player : NetworkBehaviour
         //Calculamos la dirección de movimiento del player
         zVelocity = Input.GetKey(KeyCode.W) ? 1 : Input.GetKey(KeyCode.S) ? -1 : 0;
         xVelocity = Input.GetKey(KeyCode.D) ? 1 : Input.GetKey(KeyCode.A) ? -1 : 0;
-        if(networkTransform.IsServerAuthoritative()){
+        if(PlayMode.Value == 1){
             //ServerAutority
             SubmitPositionRequestServerRpc(zVelocity,xVelocity);
-        } else if (!networkTransform.IsServerAuthoritative() && PlayMode.Value == 3){
+        } else if (PlayMode.Value == 3){
             //ServerRewind
-        } else if (!networkTransform.IsServerAuthoritative() && PlayMode.Value == 2){
-            //ClientAutority
-            Debug.Log("{Movement} Ests en client autority");
-
-            /*Vector3 newPosition = transform.position;
+            Vector3 newPosition = transform.position;
             newPosition.x = transform.position.x + xVelocity*Time.fixedDeltaTime* speed;
             newPosition.z = transform.position.z + zVelocity*Time.fixedDeltaTime*speed;
-            transform.position = newPosition;*/
+            transform.position = newPosition;
 
-            transform.Translate(Vector3.forward * zVelocity*Time.fixedDeltaTime * speed + Vector3.right * xVelocity*Time.fixedDeltaTime* speed,Space.Self);
-            //SubmitNewPositionRpc(newPosition);
+            SubmitNewPositionRpc(newPosition);
+        } else if (PlayMode.Value == 2){
+            Vector3 newPosition = transform.position;
+            newPosition.x = transform.position.x + xVelocity*Time.fixedDeltaTime* speed;
+            newPosition.z = transform.position.z + zVelocity*Time.fixedDeltaTime*speed;
+            transform.position = newPosition;
+            //Debug.Log("{Movement} Nueva Posicion: "+newPosition);
+
+            //transform.Translate(Vector3.forward * zVelocity*Time.fixedDeltaTime * speed + Vector3.right * xVelocity*Time.fixedDeltaTime* speed,Space.Self);
         }
-    }
-
-    //Metodo de movimiento para server autority
-    private void MovementServerAutority()
-    {
-        //Calculamos la dirección de movimiento del player
-        zVelocity = Input.GetKey(KeyCode.W) ? 1 : Input.GetKey(KeyCode.S) ? -1 : 0;
-        xVelocity = Input.GetKey(KeyCode.D) ? 1 : Input.GetKey(KeyCode.A) ? -1 : 0;
-
-        SubmitPositionRequestServerRpc(zVelocity,xVelocity);
-    
-    }
-    //Metodo de movimiento para client Autority
-    private void MovementClientAutority()
-    {
-        //Calculamos la dirección de movimiento del player
-        zVelocity = Input.GetKey(KeyCode.W) ? 1 : Input.GetKey(KeyCode.S) ? -1 : 0;
-        xVelocity = Input.GetKey(KeyCode.D) ? 1 : Input.GetKey(KeyCode.A) ? -1 : 0;
-
-        //El cliente se puede caer del plano
-        Vector3 newPosition = transform.position;
-        newPosition.x = transform.position.x + xVelocity*Time.fixedDeltaTime* speed;
-        newPosition.z = transform.position.z + zVelocity*Time.fixedDeltaTime*speed;
-        transform.position = newPosition;
-        SubmitNewPositionRpc(newPosition);
-    
-    }
-    private void MovementServerRewind()
-    {
     }
     public void Jump() {
         Debug.Log("Salta");
@@ -109,10 +81,20 @@ public class Player : NetworkBehaviour
         newPosition.z = Mathf.Clamp(transform.position.z + moveZ*Time.fixedDeltaTime*speed,-5,5);
         transform.position = newPosition;
     }
-    [Rpc(SendTo.NotMe)]
+    [Rpc(SendTo.ClientsAndHost)]
     void SubmitNewPositionRpc(Vector3 newPosition)
     {
         transform.position = newPosition;
+        if (newPosition.x >= 5){
+            //transform.position = Vector3.up;
+            transform.position = new Vector3(transform.position.x-0.1f,transform.position.y,transform.position.z);
+        } else if (newPosition.z >= 5){
+            transform.position = new Vector3(transform.position.x,transform.position.y,transform.position.z-0.1f);
+        } else if (newPosition.x <= -5){
+            transform.position = new Vector3(transform.position.x+0.1f,transform.position.y,transform.position.z);
+        } else if (newPosition.z <= -5){
+            transform.position = new Vector3(transform.position.x,transform.position.y,transform.position.z+0.1f);
+        }
     }
 
     //Creamos un método para cambiar la posición inicial y ponerlo al nivel del plano
@@ -132,20 +114,27 @@ public class Player : NetworkBehaviour
     {
         if (IsOwner){
             Debug.Log(PlayMode.Value);
-            switch (PlayMode.Value){
+            /*switch (PlayMode.Value){
                 case 1:
                 //ServerAutority
-                networkTransform.IsServerAuthoritative(true);
+                //hacer transicion entre escenas
+                //networkTransform.IsServerAuthoritative(true);
+                ChangeAutority(true);
+                //networkTransform.ChangeAutorityRPC(true);
                 break;
                 case 2:
                 //ClientAutority
-                networkTransform.IsServerAuthoritative(false);
+                //networkTransform.IsServerAuthoritative(false);
+                ChangeAutority(false);
+                //networkTransform.ChangeAutorityRPC(false);
                 break;
                 case 3:
                 //ServerAutorityRewind
-                networkTransform.IsServerAuthoritative(false);
+                //networkTransform.IsServerAuthoritative(false);
+                ChangeAutority(false);
+                //networkTransform.ChangeAutorityRPC(false);
                 break;
-            }
+            }*/
             Movement();
         }
     }
@@ -154,6 +143,16 @@ public class Player : NetworkBehaviour
             if (Input.GetKeyDown(KeyCode.Space)){
                 Jump();
             }
+        }
+    }
+    public void ChangeAutority(bool state){
+        Debug.Log("Entra");
+        if(state){
+            Destroy(gameObject.GetComponent<CustomNetworkTransform>());
+            gameObject.AddComponent<NetworkTransform?>();
+        } else {
+            Destroy(gameObject.GetComponent<NetworkTransform>());
+            gameObject.AddComponent<CustomNetworkTransform?>();
         }
     }
 }

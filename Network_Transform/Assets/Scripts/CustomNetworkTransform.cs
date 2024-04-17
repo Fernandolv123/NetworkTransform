@@ -1,17 +1,14 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Netcode;
 using Unity.Netcode.Components;
 using UnityEngine;
 
 public class CustomNetworkTransform : NetworkTransform
 {
-    private static bool ServerAut = true;
     // Start is called before the first frame update
-    public bool IsServerAuthoritative()
+    protected override bool OnIsServerAuthoritative()
     {
-        return ServerAut;
-    }
-    public void IsServerAuthoritative(bool state){
-        ServerAut = state;
+        return false;
     }
 }
