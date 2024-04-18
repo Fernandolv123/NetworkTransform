@@ -170,7 +170,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 01e32ffebd6b4604bbf6ae3cdeed20a0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ImprovisedTransform:
+  ImprovisedTransformServerAutority:
     m_InternalValue: {x: 0, y: 0, z: 0}
-  speed: 4
+  ImprovisedTransformClientAutority:
+    m_InternalValue: {x: 0, y: 0, z: 0}
+  speed: 8
   jumpForce: 5

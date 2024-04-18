@@ -11,7 +11,8 @@ public class Player_Transformless : NetworkBehaviour
     //Necesitamos una variable de autoridad en cliente (que no se puede editar en servidor) y una de autoridad en servidor (que no se puede editar en cliente)
     public NetworkVariable<Vector3> ImprovisedTransformServerAutority = new NetworkVariable<Vector3>();
     public NetworkVariable<Vector3> ImprovisedTransformClientAutority = new NetworkVariable<Vector3>(default, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
-    // Start is called before the first frame update
+    public NetworkVariable<bool> serverDoneNetwork = new NetworkVariable<bool>(default, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
+    private bool serverDone = false;
     public static NetworkVariable<int> PlayMode = new NetworkVariable<int>();
     //public int PlayMode;
     protected int zVelocity;
@@ -55,16 +56,20 @@ public class Player_Transformless : NetworkBehaviour
             SubmitPositionRequestServerRpc(zVelocity,xVelocity);
         } else if (PlayMode.Value == 3){
             //ServerRewind
+            serverDoneNetwork.Value = false;
             Vector3 newPosition = transform.position;
             newPosition.x = transform.position.x + xVelocity*Time.fixedDeltaTime* speed;
             newPosition.z = transform.position.z + zVelocity*Time.fixedDeltaTime*speed;
-            //transform.position = newPosition;
+            transform.position = newPosition;
             
             ImprovisedTransformClientAutority.Value = newPosition;
             transform.position = ImprovisedTransformClientAutority.Value;
+            //IDEAS: crear una coroutina hasta que la llamada al servidor se complete
+            StartCoroutine("ClientMovement");
             
-            
-            SubmitNewPositionRpc(newPosition);
+            //SubmitNewPositionRpc(newPosition);
+            //SubmitNewPosition2Rpc(zVelocity,xVelocity);
+            SubmitNewPosition3Rpc(zVelocity,xVelocity);
         } else if (PlayMode.Value == 2){
             Vector3 newPosition = transform.position;
             newPosition.x = transform.position.x + xVelocity*Time.fixedDeltaTime* speed;
@@ -74,6 +79,13 @@ public class Player_Transformless : NetworkBehaviour
             //Debug.Log("{Movement} Nueva Posicion: "+newPosition);
 
             //transform.Translate(Vector3.forward * zVelocity*Time.fixedDeltaTime * speed + Vector3.right * xVelocity*Time.fixedDeltaTime* speed,Space.Self);
+        }
+    }
+    IEnumerator ClientMovement(){
+        while(!serverDoneNetwork.Value){
+            Debug.Log(serverDoneNetwork.Value);
+            yield return null;
+            transform.position = ImprovisedTransformClientAutority.Value;
         }
     }
     public void Jump() {
@@ -94,23 +106,51 @@ public class Player_Transformless : NetworkBehaviour
     [Rpc(SendTo.Server)]
     void SubmitNewPositionRpc(Vector3 newPosition)
     {
-        ImprovisedTransformServerAutority.Value = newPosition;
+        newPosition = transform.position;
         //transform.position = newPosition;
         if (newPosition.x >= 5){
             //transform.position = Vector3.up;
-            ImprovisedTransformServerAutority.Value = new Vector3(transform.position.x-0.1f,transform.position.y,transform.position.z);
+            newPosition = new Vector3(transform.position.x-0.1f,transform.position.y,transform.position.z);
         } else if (newPosition.z >= 5){
-            ImprovisedTransformServerAutority.Value = new Vector3(transform.position.x,transform.position.y,transform.position.z-0.1f);
+            newPosition = new Vector3(transform.position.x,transform.position.y,transform.position.z-0.1f);
         } else if (newPosition.x <= -5){
-            ImprovisedTransformServerAutority.Value = new Vector3(transform.position.x+0.1f,transform.position.y,transform.position.z);
+            newPosition = new Vector3(transform.position.x+0.1f,transform.position.y,transform.position.z);
         } else if (newPosition.z <= -5){
-            ImprovisedTransformServerAutority.Value = new Vector3(transform.position.x,transform.position.y,transform.position.z+0.1f);
+            newPosition = new Vector3(transform.position.x,transform.position.y,transform.position.z+0.1f);
         }
+        ImprovisedTransformServerAutority.Value = newPosition;
         //cambiar variables en funcion como si fuese asyncrona
-        //ServerResponse(ImprovisedTransformServerAutority.Value);
+        ServerResponse();
     }
-    void ServerResponse(Vector3 newPosition){
-        ImprovisedTransformClientAutority.Value = newPosition;
+    [Rpc(SendTo.Server)]
+    void SubmitNewPosition2Rpc(float moveZ,float moveX){
+        Vector3 newPosition = transform.position;
+        newPosition.x = Mathf.Clamp(transform.position.x + moveX*Time.fixedDeltaTime* speed,-5,5);
+        newPosition.z = Mathf.Clamp(transform.position.z + moveZ*Time.fixedDeltaTime*speed,-5,5);
+        ImprovisedTransformServerAutority.Value = newPosition;
+    }
+    [Rpc(SendTo.Server)]
+    void SubmitNewPosition3Rpc(float moveZ,float moveX){
+        Vector3 newPosition = transform.position;
+        newPosition.x = transform.position.x + moveX*Time.fixedDeltaTime* speed;
+        newPosition.z = transform.position.z + moveZ*Time.fixedDeltaTime*speed;
+        if (newPosition.x >= 5){
+            //transform.position = Vector3.up;
+            newPosition.x = transform.position.x-0.1f;
+        } else if (newPosition.z >= 5){
+            newPosition.z = transform.position.z-0.1f;
+        } else if (newPosition.x <= -5){
+            newPosition.x = transform.position.x+0.1f;
+        } else if (newPosition.z <= -5){
+            newPosition.z = transform.position.z+0.1f;
+        }
+        ImprovisedTransformServerAutority.Value = newPosition;
+        ServerResponse();
+    }
+    void ServerResponse(){
+        Debug.Log("Entrando");
+        serverDoneNetwork.Value = true;
+        //ImprovisedTransformClientAutority.Value = newPosition;
     }
 
     //Creamos un método para cambiar la posición inicial y ponerlo al nivel del plano
@@ -152,10 +192,14 @@ public class Player_Transformless : NetworkBehaviour
                 break;
                 case 3:
                 //ServerAutorityRewind
+                if (!serverDoneNetwork.Value){
+                    return;
+                    //ImprovisedTransformClientAutority.Value = ImprovisedTransformServerAutority.Value;
+                }
+                //ImprovisedTransformClientAutority.Value = ImprovisedTransformServerAutority.Value;
                 //Debugs para mostrar su correcto funcionamiento
                 Debug.Log("{SERVER} Vector3("+ImprovisedTransformServerAutority.Value.x+","+ImprovisedTransformServerAutority.Value.y+","+ImprovisedTransformServerAutority.Value.z+")");
                 Debug.Log("{CLIENT} Vector3("+ImprovisedTransformClientAutority.Value.x+","+ImprovisedTransformClientAutority.Value.y+","+ImprovisedTransformClientAutority.Value.z+")");
-                ImprovisedTransformClientAutority.Value = ImprovisedTransformServerAutority.Value;
                 transform.position = ImprovisedTransformServerAutority.Value;
                 //ImprovisedTransformServerAutority.Value = ImprovisedTransformClientAutority.Value;
                 break;
