@@ -72,7 +72,7 @@ public class GameManager : MonoBehaviour
         void ChangePlayMode(int mode){
             PlayMode = mode;
             foreach (ulong uid in NetworkManager.Singleton.ConnectedClientsIds)
-                NetworkManager.Singleton.SpawnManager.GetPlayerNetworkObject(uid).GetComponent<Player>().ChangeAutority(PlayMode);
+                NetworkManager.Singleton.SpawnManager.GetPlayerNetworkObject(uid).GetComponent<Player_Transformless>().ChangeAutority(PlayMode);
         }
         public void GetPlayMode(NetworkVariable<int> network){
             network.Value = PlayMode;

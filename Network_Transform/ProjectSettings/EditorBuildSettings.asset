@@ -6,6 +6,9 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
+    path: Assets/Scenes/TransformLess.unity
+    guid: bf207e82c30b49d4d991b6e8c93b3ebe
+  - enabled: 1
     path: Assets/Scenes/ClientAut.unity
     guid: 9fc0d4010bbf28b4594072e72b8655ab
   - enabled: 1
