@@ -34,10 +34,18 @@ public class Player_Transformless : NetworkBehaviour
     }
 
     public void OnValueChangeClient(Vector3 previousValue, Vector3 newValue){
+        if (serverNotChanged.Value && !IsServer){
+            transform.position = ImprovisedTransformClientAutority.Value;
+            return;
+        }
         if (!serverNotChanged.Value){
             if (IsOwner)ImprovisedTransformClientAutority.Value = ImprovisedTransformServerAutority.Value;
             return;
         }
+        /*if (serverNotChanged.Value && !IsServer){
+            transform.position = ImprovisedTransformClientAutority.Value;
+            return;
+        }*/
         transform.position = ImprovisedTransformClientAutority.Value;
     }
 
@@ -166,28 +174,30 @@ public class Player_Transformless : NetworkBehaviour
     [Rpc(SendTo.Server)]
     void SubmitNewPosition3Rpc(float moveZ,float moveX){
         serverNotChanged.Value = false;
-        Vector3 newPosition = ImprovisedTransformClientAutority.Value;
+        Vector3 newPosition = transform.position;
         newPosition.x = transform.position.x + moveX*Time.fixedDeltaTime* speed;
         newPosition.z = transform.position.z + moveZ*Time.fixedDeltaTime*speed;
         newPosition.y = 1;
-        if (newPosition.x >= 5){
+        if (newPosition.x >= 4){
             //transform.position = Vector3.up;
-            newPosition.x = 4.5f;
-        } else if (newPosition.z >= 5){
-            newPosition.z = 4.5f;
-        } else if (newPosition.x <= -5){
-            newPosition.x = -4.5f;
-        } else if (newPosition.z <= -5){
-            newPosition.z = -4.5f;
+            newPosition.x = 3.5f;
+        } else if (newPosition.z >= 4){
+            newPosition.z = 3.5f;
+        } else if (newPosition.x <= -4){
+            newPosition.x = -3.5f;
+        } else if (newPosition.z <= -4){
+            newPosition.z = -3.5f;
         } else {
             serverNotChanged.Value = true;
         }
         if (serverNotChanged.Value){
-            ImprovisedTransformServerAutority.Value = ImprovisedTransformClientAutority.Value;
+            Debug.Log("{ANTES}"+ImprovisedTransformServerAutority.Value);
+            //ImprovisedTransformServerAutority.Value = ImprovisedTransformClientAutority.Value;
+            Debug.Log("{DESPUES}"+ImprovisedTransformServerAutority.Value);
             //ServerResponseRPC();
             return;
         }
-        Debug.Log("{NUEVO_SERVIDOR}"+newPosition);
+        //Debug.Log("{NUEVO_SERVIDOR}"+newPosition);
         //hacer delegate para detectar la modificacion de las network variables
         ImprovisedTransformServerAutority.Value = newPosition;
         ServerResponseRPC();
@@ -249,7 +259,7 @@ public class Player_Transformless : NetworkBehaviour
                 case 3:
                 Debug.Log("{MOVEMENT}"+serverDoneNetwork.Value);
                 //ServerAutorityRewind
-                /*if (serverNotChanged.Value){
+                /*if (serverNotChanged.Value && !IsServer){
                         transform.position = ImprovisedTransformClientAutority.Value;
                 }*/
                 if (!serverDoneNetwork.Value){
