@@ -11,9 +11,9 @@ GameObject:
   - component: {fileID: 1188333548530484467}
   - component: {fileID: 3749582618356323641}
   - component: {fileID: 711799113596628246}
-  - component: {fileID: 4045905074142845274}
   - component: {fileID: 2702157931045635438}
   - component: {fileID: 3906719186009387852}
+  - component: {fileID: 2045353210745163709}
   - component: {fileID: 2177587038546532956}
   m_Layer: 0
   m_Name: Player_TransformLess
@@ -87,27 +87,6 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!114 &4045905074142845274
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1174273284360604509}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 4111966257
-  InScenePlacedSourceGlobalObjectIdHash: 4218467784
-  AlwaysReplicateAsRoot: 0
-  SynchronizeTransform: 1
-  ActiveSceneSynchronization: 0
-  SceneMigrationSynchronization: 1
-  SpawnWithObservers: 1
-  DontDestroyWithOwner: 0
-  AutoObjectParentSync: 1
 --- !u!54 &2702157931045635438
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -158,6 +137,27 @@ CapsuleCollider:
   m_Height: 2
   m_Direction: 1
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &2045353210745163709
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1174273284360604509}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  GlobalObjectIdHash: 3639030699
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 1
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
 --- !u!114 &2177587038546532956
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -174,5 +174,7 @@ MonoBehaviour:
     m_InternalValue: {x: 0, y: 0, z: 0}
   ImprovisedTransformClientAutority:
     m_InternalValue: {x: 0, y: 0, z: 0}
+  serverDoneNetwork:
+    m_InternalValue: 0
   speed: 8
   jumpForce: 5

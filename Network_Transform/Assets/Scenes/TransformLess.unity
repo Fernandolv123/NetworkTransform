@@ -242,7 +242,7 @@ MonoBehaviour:
     Prefabs:
       NetworkPrefabsLists:
       - {fileID: 11400000, guid: 6940c1e35e23fd24593af1ce59f09906, type: 2}
-    TickRate: 30
+    TickRate: 240
     ClientConnectionBufferTimeout: 10
     ConnectionApproval: 0
     ConnectionData: 
@@ -598,7 +598,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_PresetAsset: {fileID: 0}
   m_PresetReference:
-    rid: 6735256809994715146
+    rid: 7141685786317160459
   m_Scenario:
     rid: -2
   m_IsScenarioSettingsFolded: 0
@@ -608,7 +608,7 @@ MonoBehaviour:
     RefIds:
     - rid: -2
       type: {class: , ns: , asm: }
-    - rid: 6735256809994715146
+    - rid: 7141685786317160459
       type: {class: NetworkSimulatorPreset, ns: Unity.Multiplayer.Tools.NetworkSimulator.Runtime, asm: Unity.Multiplayer.Tools.NetworkSimulator.Runtime}
       data:
         <Name>k__BackingField: None
