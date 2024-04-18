@@ -26,7 +26,7 @@ public class Player_Transformless : NetworkBehaviour
 
     public override void OnNetworkSpawn()
     {
-        Debug.Log("{CLIENT} Spawned");
+        //Debug.Log("{CLIENT} Spawned");
         if (IsOwner)
         {
             //Cambiamos su posicion inicial
@@ -152,6 +152,9 @@ public class Player_Transformless : NetworkBehaviour
                 break;
                 case 3:
                 //ServerAutorityRewind
+                //Debugs para mostrar su correcto funcionamiento
+                Debug.Log("{SERVER} Vector3("+ImprovisedTransformServerAutority.Value.x+","+ImprovisedTransformServerAutority.Value.y+","+ImprovisedTransformServerAutority.Value.z+")");
+                Debug.Log("{CLIENT} Vector3("+ImprovisedTransformClientAutority.Value.x+","+ImprovisedTransformClientAutority.Value.y+","+ImprovisedTransformClientAutority.Value.z+")");
                 ImprovisedTransformClientAutority.Value = ImprovisedTransformServerAutority.Value;
                 transform.position = ImprovisedTransformServerAutority.Value;
                 //ImprovisedTransformServerAutority.Value = ImprovisedTransformClientAutority.Value;
