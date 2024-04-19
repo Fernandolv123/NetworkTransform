@@ -14,4 +14,7 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/ServerAut.unity
     guid: 738ef1922d43554478a71a3eb09ba99e
+  - enabled: 1
+    path: Assets/Scenes/OptimizedTransform.unity
+    guid: 99437b85ebe9afd468b6746466fcca8e
   m_configObjects: {}
