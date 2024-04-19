@@ -10,9 +10,6 @@ public class GameManager : MonoBehaviour
     void Awake(){
         instance = this;
     }
-    void Update(){
-        //PlayMode2.Value = PlayMode;
-    }
         void OnGUI()
         {
             GUILayout.BeginArea(new Rect(10, 10, 300, 300));
@@ -23,8 +20,6 @@ public class GameManager : MonoBehaviour
             else
             {
                 StatusLabels();
-
-                SubmitNewPosition();
             }
 
             GUILayout.EndArea();
@@ -44,29 +39,11 @@ public class GameManager : MonoBehaviour
 
             GUILayout.Label("Transport: " +
                 NetworkManager.Singleton.NetworkConfig.NetworkTransport.GetType().Name);
-            GUILayout.Label("Mode: " + (PlayMode==PLAYMODE.ServerAutority ? "ServerAuthority" : PlayMode==PLAYMODE.ClientAutority ? "ClientAuthority" : "ServerRewindAuthotity"));
+            if(mode != "Client")GUILayout.Label("Mode: " + (PlayMode==PLAYMODE.ServerAutority ? "ServerAuthority" : PlayMode==PLAYMODE.ClientAutority ? "ClientAuthority" : "ServerRewindAuthotity"));
             if (mode == "Host" || mode == "Server"){
                 if (GUILayout.Button("ServerAuthority")) ChangePlayMode(PLAYMODE.ServerAutority);
                 if (GUILayout.Button("ClientAuthority")) ChangePlayMode(PLAYMODE.ClientAutority);
                 if (GUILayout.Button("ServerRewindAuthotity")) ChangePlayMode(PLAYMODE.ServerRewind);
-            }
-        }
-
-        static void SubmitNewPosition()
-        {
-            if (GUILayout.Button(NetworkManager.Singleton.IsHost ? "Jump": NetworkManager.Singleton.IsServer ? "Jump But Better Cause you are server" : "Jump"))
-            {
-                if (NetworkManager.Singleton.IsServer && !NetworkManager.Singleton.IsClient )
-                {
-                    foreach (ulong uid in NetworkManager.Singleton.ConnectedClientsIds)
-                        NetworkManager.Singleton.SpawnManager.GetPlayerNetworkObject(uid).GetComponent<Player>().Jump();
-                }
-                else
-                {
-                    var playerObject = NetworkManager.Singleton.SpawnManager.GetLocalPlayerObject();
-                    var player = playerObject.GetComponent<Player>();
-                    player.Jump();
-                }
             }
         }
         void ChangePlayMode(PLAYMODE mode){
