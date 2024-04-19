@@ -6,6 +6,18 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/Scenes/SampleScene.unity
+    path: Assets/Scenes/TransformLess.unity
+    guid: bf207e82c30b49d4d991b6e8c93b3ebe
+  - enabled: 1
+    path: Assets/Scenes/ClientAut.unity
     guid: 9fc0d4010bbf28b4594072e72b8655ab
+  - enabled: 1
+    path: Assets/Scenes/ServerAut.unity
+    guid: 738ef1922d43554478a71a3eb09ba99e
+  - enabled: 1
+    path: Assets/Scenes/OptimizedTransform.unity
+    guid: 99437b85ebe9afd468b6746466fcca8e
+  - enabled: 1
+    path: Assets/Scenes/Optimized_Movement.unity
+    guid: b1b15e2219bb92f40b5422e66f14c41e
   m_configObjects: {}
