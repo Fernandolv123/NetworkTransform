@@ -146,8 +146,8 @@ namespace Networking_Transformless{
             //Al principio el servidor no tiene que actuar
             serverGetsAutority.Value = false;
             Vector3 newPosition = transform.position;
-            newPosition.x = Mathf.Clamp(transform.position.x + moveX*Time.deltaTime* speed,-5.01f,5.01f);
-            newPosition.z = Mathf.Clamp(transform.position.z + moveZ*Time.deltaTime*speed,-5.01f,5.01f);
+            newPosition.x = Mathf.Clamp(transform.position.x + moveX*Time.deltaTime* speed,-5,5);
+            newPosition.z = Mathf.Clamp(transform.position.z + moveZ*Time.deltaTime*speed,-5,5);
             PositionControlledByServer.Value = newPosition;
             if (OutOfBoundaries(newPosition)){
                 //si la posicion se sale de los limites, el servidor deberá actuar
