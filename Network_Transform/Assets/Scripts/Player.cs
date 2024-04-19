@@ -27,13 +27,13 @@ public class Player : NetworkBehaviour
         {
             //Cambiamos su posicion inicial
             SubmitInitialPositionRPC();
-            GetPlayModeRPC();
+            //GetPlayModeRPC();
         }
     }
-    [Rpc(SendTo.Server)]
+    /*[Rpc(SendTo.Server)]
     void GetPlayModeRPC(){
         GameManager.instance.GetPlayMode(PlayMode);
-    }
+    }*/
     public void ChangeAutority(int mode){
         SubmitNewAutorityRPC(mode);
     }

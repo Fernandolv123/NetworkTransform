@@ -2,10 +2,10 @@ using System.Collections;
 using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
-
+using Networking_Transformless;
 public class GameManager : MonoBehaviour
 {
-    public static int PlayMode=1;
+    public static PLAYMODE PlayMode=PLAYMODE.ServerAutority;
     public static GameManager instance;
     void Awake(){
         instance = this;
@@ -44,11 +44,11 @@ public class GameManager : MonoBehaviour
 
             GUILayout.Label("Transport: " +
                 NetworkManager.Singleton.NetworkConfig.NetworkTransport.GetType().Name);
-            GUILayout.Label("Mode: " + (PlayMode==1 ? "ServerAuthority" : PlayMode==2 ? "ClientAuthority" : "ServerRewindAuthotity"));
+            GUILayout.Label("Mode: " + (PlayMode==PLAYMODE.ServerAutority ? "ServerAuthority" : PlayMode==PLAYMODE.ClientAutority ? "ClientAuthority" : "ServerRewindAuthotity"));
             if (mode == "Host" || mode == "Server"){
-                if (GUILayout.Button("ServerAuthority")) ChangePlayMode(1);
-                if (GUILayout.Button("ClientAuthority")) ChangePlayMode(2);
-                if (GUILayout.Button("ServerRewindAuthotity")) ChangePlayMode(3);
+                if (GUILayout.Button("ServerAuthority")) ChangePlayMode(PLAYMODE.ServerAutority);
+                if (GUILayout.Button("ClientAuthority")) ChangePlayMode(PLAYMODE.ClientAutority);
+                if (GUILayout.Button("ServerRewindAuthotity")) ChangePlayMode(PLAYMODE.ServerRewind);
             }
         }
 
@@ -69,12 +69,12 @@ public class GameManager : MonoBehaviour
                 }
             }
         }
-        void ChangePlayMode(int mode){
+        void ChangePlayMode(PLAYMODE mode){
             PlayMode = mode;
             foreach (ulong uid in NetworkManager.Singleton.ConnectedClientsIds)
-                NetworkManager.Singleton.SpawnManager.GetPlayerNetworkObject(uid).GetComponent<Player_Transformless>().ChangeAutority(PlayMode);
+                NetworkManager.Singleton.SpawnManager.GetPlayerNetworkObject(uid).GetComponent<Optimized_PlayerTransformless>().ChangeAutority(PlayMode);
         }
-        public void GetPlayMode(NetworkVariable<int> network){
+        public void GetPlayMode(NetworkVariable<PLAYMODE> network){
             network.Value = PlayMode;
         }
 }

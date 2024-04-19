@@ -55,15 +55,15 @@ public class Player_Transformless : NetworkBehaviour
         if (IsOwner)
         {
             //Cambiamos su posicion inicial
-            GetPlayModeRPC();
+            //GetPlayModeRPC();
             SubmitInitialPositionRPC();
             
         }
     }
-    [Rpc(SendTo.Server)]
+    /*[Rpc(SendTo.Server)]
     void GetPlayModeRPC(){
         GameManager.instance.GetPlayMode(PlayMode);
-    }
+    }*/
     public void ChangeAutority(int mode){
         SubmitNewAutorityRPC(mode);
     }
@@ -259,13 +259,8 @@ public class Player_Transformless : NetworkBehaviour
                 case 3:
                 Debug.Log("{MOVEMENT}"+serverDoneNetwork.Value);
                 //ServerAutorityRewind
-                /*if (serverNotChanged.Value && !IsServer){
-                        transform.position = ImprovisedTransformClientAutority.Value;
-                }*/
                 if (!serverDoneNetwork.Value){
-                    //transform.position = ImprovisedTransformClientAutority.Value;
                     return;
-                    //ImprovisedTransformClientAutority.Value = ImprovisedTransformServerAutority.Value;
                 }
                 Debug.Log("{Movimiento en servidor}"+serverDoneNetwork.Value);
                 //ImprovisedTransformClientAutority.Value = ImprovisedTransformServerAutority.Value;
