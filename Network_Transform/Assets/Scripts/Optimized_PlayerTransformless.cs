@@ -15,6 +15,8 @@ namespace Networking_Transformless{
         private NetworkVariable<Vector3> PositionControlledByServer = new NetworkVariable<Vector3>();
         //Creamos una variable para detectar cuando el servidor ha terminado su trabajo en el ServerRewind
         public NetworkVariable<bool> serverDoneNetwork = new NetworkVariable<bool>(default, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
+        //Creamos una variable para detectar cuando es necesario la corrección de la posición en ServerRewind
+        public NetworkVariable<bool> serverGetsAutority = new NetworkVariable<bool>();
         [Header("Referentes al movimiento")]
         private int zVelocity;
         private int xVelocity;
@@ -52,6 +54,11 @@ namespace Networking_Transformless{
         // Update is called once per frame
         void Update()
         {
+            //Queremos que esta parte sea ejecutada por el owner
+            if(IsOwner){
+                //Programamos el movimiento
+                Movement();
+            }
             Debug.Log(playmode.Value);
             switch(playmode.Value){
                 case PLAYMODE.ServerAutority:
@@ -76,18 +83,13 @@ namespace Networking_Transformless{
                 //con serverAutority pero menos optimizado
 
                 //Si el servidor no ha terminado sus comprobaciones, no tenemos nada que hacer aqui
-                Debug.Log(serverDoneNetwork.Value);
+                Debug.Log("{PLAYMODE.ServerRewind}"+serverDoneNetwork.Value);
                 if (!serverDoneNetwork.Value){
-                    return;
+                    break;
                 }
                 //Actualizamos la posicion del servidor
                 transform.position = PositionControlledByServer.Value;
                 break;
-            }
-            //Queremos que esta parte sea ejecutada por el owner
-            if(IsOwner){
-                //Programamos el movimiento
-                Movement();
             }
         }
         private void Movement(){
@@ -141,13 +143,32 @@ namespace Networking_Transformless{
         }
         [Rpc(SendTo.Server)]
         private void SubmitPermitedPositionRpc(float moveZ,float moveX){
-            //El principio es igual que el movimiento en servidor
+            //Al principio el servidor no tiene que actuar
+            serverGetsAutority.Value = false;
             Vector3 newPosition = transform.position;
-            newPosition.x = Mathf.Clamp(transform.position.x + moveX*Time.deltaTime* speed,-5,5);
-            newPosition.z = Mathf.Clamp(transform.position.z + moveZ*Time.deltaTime*speed,-5,5);
+            newPosition.x = Mathf.Clamp(transform.position.x + moveX*Time.deltaTime* speed,-5.01f,5.01f);
+            newPosition.z = Mathf.Clamp(transform.position.z + moveZ*Time.deltaTime*speed,-5.01f,5.01f);
             PositionControlledByServer.Value = newPosition;
+            if (OutOfBoundaries(newPosition)){
+                //si la posicion se sale de los limites, el servidor deberá actuar
+                serverGetsAutority.Value = true;
+            }
+            if (!serverGetsAutority.Value) return; //Si el servidor no necesita actuar, no ejecutaremos nada
+            
             //Al terminar, debemos setear la variable EXCLUSIVAMENTE en el cliente que ha empezado la acción, es decir, el owner
             ServerDoneRPC();
+        }
+        public bool OutOfBoundaries(Vector3 newPosition){
+            if (newPosition.x >= 5){
+                return true;
+            } else if (newPosition.z >= 5){
+                return true;
+            } else if (newPosition.x <= -5){
+                return true;
+            } else if (newPosition.z <= -5){
+                return true;
+            }
+            return false;
         }
 
         [Rpc(SendTo.Owner)]
@@ -170,10 +191,19 @@ namespace Networking_Transformless{
         }
 
         public void OnValueChangeClientVariable(Vector3 previousValue, Vector3 newValue){
+            //Si el cliente se ha salido de los limites, igualamos el valor de la variable cliente a la de servidor
+            if (serverGetsAutority.Value){
+                if (IsOwner)PositionControlledByClient.Value = PositionControlledByServer.Value;
+                return;
+            }
             //Actualizamos la posicion controlada por el cliente para evitar teletransportes al cambiar el modo
             transform.position = PositionControlledByClient.Value;
         }
         public void OnValueChangeServerVariable(Vector3 previousValue, Vector3 newValue){
+            //Si el cliente no se ha salido de los limites, no hace nada
+            if (!serverGetsAutority.Value){
+                return;
+            }
             transform.position = PositionControlledByServer.Value;
         }
     }
